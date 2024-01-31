@@ -24,17 +24,25 @@ class ConferenceResource extends Resource
                     ->relationship('venue', 'name'),
                 Forms\Components\TextInput::make('name')
                     ->required()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('description')
+                    ->maxLength(60)
+                    ->label('Conference')
+                    ->default('My Conference'),
+                Forms\Components\MarkdownEditor::make('description')
                     ->required()
-                    ->maxLength(255),
+                    ->helperText('Hello'),
                 Forms\Components\DateTimePicker::make('start_date')
                     ->required(),
                 Forms\Components\DateTimePicker::make('end_date')
                     ->required(),
-                Forms\Components\TextInput::make('status')
-                    ->required()
-                    ->maxLength(255),
+                Forms\Components\Checkbox::make('is_published')
+                    ->default(true),
+                Forms\Components\Select::make('status')
+                    ->options([
+                        'draft' => 'Draft',
+                        'published' => 'Published',
+                        'archived' => 'Archived',
+                    ])
+                    ->required(),
                 Forms\Components\TextInput::make('region')
                     ->required()
                     ->maxLength(255),
