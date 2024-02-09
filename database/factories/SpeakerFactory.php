@@ -23,7 +23,8 @@ class SpeakerFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->safeEmail(),
             'bio' => fake()->text(),
-            'twitter_handle' => fake()->word(),
+            'qualifications' => [],
+            'twitter_handle' => '@'.fake()->userName(),
         ];
     }
 }

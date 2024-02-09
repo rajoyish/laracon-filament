@@ -23,10 +23,10 @@ class DatabaseSeeder extends Seeder
             'email' => 'rajoyish@mail.com',
             'password' => bcrypt('Pa$$w0rd!'),
         ]);
-        // User::factory(10)->create();
-        // Conference::factory(10)->create();
-        // Venue::factory(10)->create();
-        // Speaker::factory(10)->create();
-        // Talk::factory(10)->create();
+        User::factory(10)->create();
+        Conference::factory(10)->create();
+        Venue::factory(10)->create();
+        Speaker::factory(10)->create();
+        Talk::factory(10)->create();
     }
 }
