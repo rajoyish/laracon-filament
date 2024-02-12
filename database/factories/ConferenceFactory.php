@@ -22,7 +22,7 @@ class ConferenceFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->country().' Con',
+            'name' => 'LaraCon '.fake()->country(),
             'description' => fake()->word(),
             'start_date' => fake()->dateTime(),
             'end_date' => fake()->dateTime(),
