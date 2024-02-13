@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\Region;
+use Filament\Forms\Components\Actions;
+use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\MarkdownEditor;
@@ -102,7 +104,6 @@ class Conference extends Model
                                 ->default(true),
                         ]),
                 ]),
-
             Section::make('Location')
                 ->columns(2)
                 ->schema([
@@ -119,6 +120,25 @@ class Conference extends Model
                             return $query->where('region', $get('region'));
                         }),
                 ]),
+            Actions::make([
+                Action::make('star')
+                    ->label('Fill with Factory Data')
+                    ->icon('heroicon-m-star')
+                    ->visible(function (string $operation) {
+                        if ($operation !== 'create') {
+                            return false;
+                        }
+                        if (! app()->environment('local')) {
+                            return false;
+                        }
+
+                        return true;
+                    })
+                    ->action(function ($livewire) {
+                        $data = Conference::factory()->make()->toArray();
+                        $livewire->form->fill($data);
+                    }),
+            ]),
         ];
     }
 }
