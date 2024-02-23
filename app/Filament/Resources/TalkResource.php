@@ -10,7 +10,11 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 
 class TalkResource extends Resource
@@ -39,6 +43,10 @@ class TalkResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->persistFiltersInSession()
+            ->filtersTriggerAction(function ($action) {
+                return $action->button()->label('Filters');
+            })
             ->columns([
                 Tables\Columns\TextColumn::make('title')
                     ->searchable()
@@ -71,7 +79,20 @@ class TalkResource extends Resource
                     }),
             ])
             ->filters([
-                //
+                TernaryFilter::make('new_talk'),
+                SelectFilter::make('speaker')
+                    ->relationship('speaker', 'name')
+                    ->preload()
+                    ->multiple()
+                    ->searchable(),
+                Filter::make('has_avatar')
+                    ->label('Only speakers with avatar')
+                    ->toggle()
+                    ->query(function ($query) {
+                        return $query->whereHas('speaker', function (Builder $query) {
+                            $query->whereNotNull('avatar');
+                        });
+                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
