@@ -3,18 +3,17 @@
 namespace App\Filament\Resources;
 
 use App\Enums\TalkLength;
+use App\Enums\TalkStatus;
 use App\Filament\Resources\TalkResource\Pages;
 use App\Models\Talk;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Columns\ImageColumn;
-use Filament\Tables\Filters\Filter;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 
 class TalkResource extends Resource
@@ -27,9 +26,6 @@ class TalkResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('speaker_id')
-                    ->relationship('speaker', 'name')
-                    ->required(),
                 Forms\Components\TextInput::make('title')
                     ->required()
                     ->maxLength(255),
@@ -37,6 +33,9 @@ class TalkResource extends Resource
                     ->required()
                     ->maxLength(65535)
                     ->columnSpanFull(),
+                Forms\Components\Select::make('speaker_id')
+                    ->relationship('speaker', 'name')
+                    ->required(),
             ]);
     }
 
@@ -49,12 +48,13 @@ class TalkResource extends Resource
             })
             ->columns([
                 Tables\Columns\TextColumn::make('title')
-                    ->searchable()
                     ->sortable()
+                    ->searchable()
                     ->description(function (Talk $record) {
-                        return Str::of($record->abstract)->limit(40);
+                        return Str::limit($record->abstract, 40);
                     }),
-                ImageColumn::make('speaker.avatar')->label('Speaker Avatar')
+                Tables\Columns\ImageColumn::make('speaker.avatar')
+                    ->label('Speaker Avatar')
                     ->circular()
                     ->defaultImageUrl(function ($record) {
                         return 'https://ui-avatars.com/api/?background=0D8ABC&color=fff&name='.urlencode($record->speaker->name);
@@ -62,7 +62,8 @@ class TalkResource extends Resource
                 Tables\Columns\TextColumn::make('speaker.name')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\ToggleColumn::make('new_talk'),
+                Tables\Columns\IconColumn::make('new_talk')
+                    ->boolean(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->sortable()
@@ -79,14 +80,14 @@ class TalkResource extends Resource
                     }),
             ])
             ->filters([
-                TernaryFilter::make('new_talk'),
-                SelectFilter::make('speaker')
+                Tables\Filters\TernaryFilter::make('new_talk'),
+                Tables\Filters\SelectFilter::make('speaker')
                     ->relationship('speaker', 'name')
-                    ->preload()
                     ->multiple()
-                    ->searchable(),
-                Filter::make('has_avatar')
-                    ->label('Only speakers with avatar')
+                    ->searchable()
+                    ->preload(),
+                Tables\Filters\Filter::make('has_avatar')
+                    ->label('Show Only Speakers With Avatars')
                     ->toggle()
                     ->query(function ($query) {
                         return $query->whereHas('speaker', function (Builder $query) {
@@ -95,12 +96,61 @@ class TalkResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->slideOver(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('approve')
+                        ->visible(function ($record) {
+                            return $record->status === (TalkStatus::SUBMITTED);
+                        })
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->action(function (Talk $record) {
+                            $record->approve();
+                        })->after(function () {
+                            Notification::make()->success()->title('This talk was approved')
+                                ->duration(1000)
+                                ->body('The speaker has been notified and the talk has been added to the conference schedule.')
+                                ->send();
+                        }),
+                    Tables\Actions\Action::make('reject')
+                        ->icon('heroicon-o-no-symbol')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->visible(function ($record) {
+                            return $record->status === (TalkStatus::SUBMITTED);
+                        })
+                        ->action(function (Talk $record) {
+                            $record->reject();
+                        })->after(function () {
+                            Notification::make()->danger()->title('This talk was rejected')
+                                ->duration(1000)
+                                ->body('The speaker has been notified.')
+                                ->send();
+                        }),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('approve')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->action(function (Collection $records) {
+                            $records->each->approve();
+                        })->after(function () {
+                            Notification::make()->success()->title('All selected talks were approved')
+                                ->body('The speakers has been notified and the talk has been added to the conference schedule.')
+                                ->send();
+                        }),
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
                 ]),
+            ])
+            ->headerActions([
+                Tables\Actions\Action::make('export')
+                    ->tooltip('This will export all records visible in the table. Adjust filters to export a subset of records.')
+                    ->action(function ($livewire) {
+                    }),
             ]);
     }
 
@@ -116,7 +166,7 @@ class TalkResource extends Resource
         return [
             'index' => Pages\ListTalks::route('/'),
             'create' => Pages\CreateTalk::route('/create'),
-            'edit' => Pages\EditTalk::route('/{record}/edit'),
+            //            'edit' => Pages\EditTalk::route('/{record}/edit'),
         ];
     }
 }
