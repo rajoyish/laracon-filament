@@ -54,7 +54,7 @@ class TalkResource extends Resource
                         return Str::limit($record->abstract, 40);
                     }),
                 Tables\Columns\ImageColumn::make('speaker.avatar')
-                    ->label('Speaker Avatar')
+                    ->label('Avatar')
                     ->circular()
                     ->defaultImageUrl(function ($record) {
                         return 'https://ui-avatars.com/api/?background=0D8ABC&color=fff&name='.urlencode($record->speaker->name);
@@ -131,20 +131,18 @@ class TalkResource extends Resource
                 ]),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\BulkAction::make('approve')
-                        ->icon('heroicon-o-check-circle')
-                        ->color('success')
-                        ->action(function (Collection $records) {
-                            $records->each->approve();
-                        })->after(function () {
-                            Notification::make()->success()->title('All selected talks were approved')
-                                ->body('The speakers has been notified and the talk has been added to the conference schedule.')
-                                ->send();
-                        }),
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
-                ]),
+                Tables\Actions\BulkAction::make('approve')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->action(function (Collection $records) {
+                        $records->each->approve();
+                    })->after(function () {
+                        Notification::make()->success()->title('All selected talks were approved')
+                            ->body('The speakers has been notified and the talk has been added to the conference schedule.')
+                            ->send();
+                    }),
+                Tables\Actions\DeleteBulkAction::make(),
+                Tables\Actions\RestoreBulkAction::make(),
             ])
             ->headerActions([
                 Tables\Actions\Action::make('export')
