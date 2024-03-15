@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
+use App\Models\Attendee;
 use App\Models\Conference;
 use App\Models\Speaker;
 use App\Models\Talk;
@@ -28,5 +29,6 @@ class DatabaseSeeder extends Seeder
         Venue::factory(10)->create();
         Speaker::factory(10)->create();
         Talk::factory(10)->create();
+        Attendee::factory(10)->create();
     }
 }
