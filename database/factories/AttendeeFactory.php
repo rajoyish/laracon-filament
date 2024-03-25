@@ -23,6 +23,7 @@ class AttendeeFactory extends Factory
             'ticket_cost' => 50000,
             'is_paid' => true,
             'conference_id' => Conference::factory(),
+            'created_at' => fake()->dateTimeBetween('-3 months', 'now'),
         ];
     }
 }

@@ -29,6 +29,6 @@ class DatabaseSeeder extends Seeder
         Venue::factory(10)->create();
         Speaker::factory(10)->create();
         Talk::factory(10)->create();
-        Attendee::factory(10)->create();
+        Attendee::factory(300)->create();
     }
 }
